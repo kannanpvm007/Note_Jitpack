@@ -1,6 +1,7 @@
 package com.example.notejitpack.screen
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,11 +44,14 @@ import com.example.notejitpack.data.Note
 fun NoteScreen(
     notes:List<Note>,
     onAddNotes:(Note)-> Unit,
-    onRemoveNotes:(Note)-> Unit
+    onRemoveNotes:(Note)-> Unit,
+    deleteAll:()-> Unit,
+    update:(Note)-> Unit
 ) {
 
     var title by remember { mutableStateOf("") }
     var details by remember { mutableStateOf("") }
+    var button by remember { mutableStateOf("Save") }
     val context =  LocalContext.current
 
     Column(modifier = Modifier.padding(6.dp)) {
@@ -54,8 +59,12 @@ fun NoteScreen(
             Text(text = stringResource(id = R.string.app_name))
         }, actions = {
             Icon(
-                imageVector = Icons.Rounded.Notifications,
-                contentDescription = "notification icon"
+                imageVector = Icons.Rounded.Delete,
+                contentDescription = "notification icon",
+                modifier = Modifier.clickable {
+                    deleteAll.invoke()
+                }
+
             )
 
         }, colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = Color.LightGray)
@@ -92,13 +101,19 @@ fun NoteScreen(
 
             NodeButton(
                 modifier = Modifier.padding(top = 9.dp, bottom = 8.dp),
-                text = "Save",
+                text = button,
                 onclick = {
                     if (title.isNotEmpty() && details.isNotEmpty()) {
-                        onAddNotes.invoke(Note(title=title, description = details))
+                        if (button == "Save") {
+                            onAddNotes.invoke(Note(title = title, description = details))
+                        } else {
+                            update.invoke(Note(title = title, description = details))
+                        }
+
                         Toast.makeText(context, "Note added", Toast.LENGTH_SHORT).show()
                         title=""
                         details=""
+                        button="Save"
                     }
 
 
@@ -107,7 +122,14 @@ fun NoteScreen(
         Divider(modifier = Modifier.height(10.dp))
         LazyColumn(){
             items(notes){ note->
-                NoteRow(note = note, onNoteClicked ={ onRemoveNotes(note)} )
+                NoteRow(note = note, onNoteClicked ={
+                        selectedNote->
+                    title= selectedNote.title
+                    details= selectedNote.description
+                    button="Update"
+                },onNoteDeleteClicked={
+                    onRemoveNotes(it)
+                } )
             }
 
         }
@@ -118,5 +140,5 @@ fun NoteScreen(
 @Preview(showBackground = true)
 @Composable
 fun Preview() {
-    NoteScreen(notes = emptyList(),{},{})
+    NoteScreen(notes = emptyList(),{},{},{},{})
 }

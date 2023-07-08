@@ -1,6 +1,7 @@
 package com.example.notejitpack
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -9,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -18,7 +20,9 @@ import com.example.notejitpack.data.Note
 import com.example.notejitpack.screen.NoteScreen
 import com.example.notejitpack.screen.NoteViewModel
 import com.example.notejitpack.ui.theme.NoteJitpackTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,13 +43,20 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NoteApp(viewMode: NoteViewModel= viewModel()){
-    val notes = viewMode.getAllNotes()
+    val notes = viewMode.noteList.collectAsState().value
     NoteScreen(notes = notes, onAddNotes = {
         viewMode.addNote(it)
 
     },onRemoveNotes= {
+        Log.d("TAG", "NoteApp: $it")
         viewMode.removeNote(it)
-    })
+    }, deleteAll={
+        viewMode.removeAllNote()
+    }, update = {
+        Log.e("TAG", "NoteApp: update${it}", )
+        viewMode.updateNote(it)
+    }
+    )
 }
 
 @Composable
